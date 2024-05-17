@@ -13,4 +13,4 @@ prb show rigid-body --help
 prb show rigid-body
 ```
 
-[prb-default](.images/prb-default.png)
+![prb-default](.images/prb-default.png)
