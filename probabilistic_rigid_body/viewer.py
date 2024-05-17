@@ -19,9 +19,4 @@ class Viewer():
                 levels=50,
                 cmap="viridis")
 
-        plt.show()
-
-
-
-def figure():
-    return plt.figure()
+        plt.show(block=False)

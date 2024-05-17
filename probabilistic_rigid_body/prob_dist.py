@@ -11,7 +11,7 @@ class ProbabilityDistribution():
         self._prob_dist = np.zeros(gridmap[0].shape)
 
     def get(self):
-        return deepcopy(self._prob_dist)
+        return self._prob_dist / np.sum(self._prob_dist)
 
     def add(self, rigid_body):
         x, y = rigid_body.pos
@@ -39,6 +39,3 @@ class ProbabilityDistribution():
                 px = norm.cdf(rx+w/2, x, xstd+wstd) - norm.cdf(rx-w/2, x, xstd+wstd)
                 py = norm.cdf(ry+l/2, y, ystd+lstd) - norm.cdf(ry-l/2, y, ystd+lstd)
                 self._prob_dist[iy, ix] += px * py
-
-        # Normalize
-        self._prob_dist = self._prob_dist / np.sum(self._prob_dist)
