@@ -14,3 +14,8 @@ prb show rigid-body
 ```
 
 ![prb-default](.images/prb-default.png)
+
+プロファイル（周辺確率）はマウスカーソルの位置に応じて表示されます．
+
+<iframe src="https://giphy.com/embed/MLMFid5OJ5C3vQvSVn" width="480" height="377" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/MLMFid5OJ5C3vQvSVn">via GIPHY</a></p>p
+
