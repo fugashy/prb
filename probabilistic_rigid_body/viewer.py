@@ -6,25 +6,29 @@ from matplotlib.gridspec import (
         )
 from matplotlib.widgets import Cursor
 
+_FIG_SCALE_FACTOR=0.6
+
 
 class Viewer():
     def __init__(self, meshgrid):
         self._meshgrid = meshgrid
 
-        self._fig = plt.figure()
+        self._fig = plt.figure(figsize=(
+            10*_FIG_SCALE_FACTOR,
+            8*_FIG_SCALE_FACTOR))
 
-        gs_master = GridSpec(
+        self._gs_master = GridSpec(
                 nrows=2,
                 ncols=2,
                 height_ratios=[1, 1])
         gs_main = GridSpecFromSubplotSpec(
                 nrows=2,
                 ncols=1,
-                subplot_spec=gs_master[:, 0])
+                subplot_spec=self._gs_master[:, 0])
         gs_profile = GridSpecFromSubplotSpec(
                 nrows=2,
                 ncols=1,
-                subplot_spec=gs_master[:, 1])
+                subplot_spec=self._gs_master[:, 1])
 
         self._ax_main = self._fig.add_subplot(gs_main[:, :])
         self._ax_main.set_title("P(x, y)")
@@ -33,18 +37,18 @@ class Viewer():
         self._ax_main.axis("equal")
 
         self._ax_profile_by_name = {
-                "col": {
+                "row": {
                     "ax": self._fig.add_subplot(gs_profile[0, :]),
+                    "gen_title": lambda y: f"P(x|y={y:.2f})",
+                    "xlabel": "x[m]",
+                    "gen_ylabel": lambda y: f"P(x|y={y:.2f})[-]"
+                    },
+                "col": {
+                    "ax": self._fig.add_subplot(gs_profile[1, :]),
                     "gen_title": lambda x: f"P(y|x={x:.2f})",
                     "xlabel": "y[m]",
                     "gen_ylabel": lambda x: f"P(y|x={x:.2f})[-]"
                     },
-                "row": {
-                    "ax": self._fig.add_subplot(gs_profile[1, :]),
-                    "gen_title": lambda y: f"P(x|y={y:.2f})",
-                    "xlabel": "x[m]",
-                    "gen_ylabel": lambda y: f"P(x|y={y:.2f})[-]"
-                    }
                 }
         for key in self._ax_profile_by_name.keys():
             conf = self._ax_profile_by_name[key]
@@ -54,13 +58,13 @@ class Viewer():
             conf["ax"].set_xlabel(conf["xlabel"])
             conf["ax"].set_ylabel(conf["gen_ylabel"](0))
 
-        plt.tight_layout()
+        self._gs_master.tight_layout(self._fig)
+        plt.subplots_adjust(hspace=0.5, wspace=0.5)
 
         self._cursor = Cursor(self._ax_main, useblit=True, color="red", linewidth=1)
         self._image = None
 
         self._fig.canvas.mpl_connect("motion_notify_event", self._update_profiles)
-
 
     def plot(self, prob_dist):
         self._ax_main.contourf(
@@ -106,6 +110,6 @@ class Viewer():
                     profile_by_name[key]["x"],
                     profile_by_name[key]["values"])
 
-        plt.tight_layout()
+        self._gs_master.tight_layout(self._fig)
         self._fig.canvas.draw()
 
