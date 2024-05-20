@@ -39,24 +39,24 @@ class Viewer():
         self._ax_profile_by_name = {
                 "row": {
                     "ax": self._fig.add_subplot(gs_profile[0, :]),
-                    "gen_title": lambda y: f"P(x|y={y:.2f})",
+                    "gen_title": lambda xy: f"P(x|y={xy[1]:.2f})",
                     "xlabel": "x[m]",
-                    "gen_ylabel": lambda y: f"P(x|y={y:.2f})[-]"
+                    "gen_ylabel": lambda xy: f"P(x|y={xy[1]:.2f})[-]"
                     },
                 "col": {
                     "ax": self._fig.add_subplot(gs_profile[1, :]),
-                    "gen_title": lambda x: f"P(y|x={x:.2f})",
+                    "gen_title": lambda xy: f"P(y|x={xy[0]:.2f})",
                     "xlabel": "y[m]",
-                    "gen_ylabel": lambda x: f"P(y|x={x:.2f})[-]"
+                    "gen_ylabel": lambda xy: f"P(y|x={xy[1]:.2f})[-]"
                     },
                 }
         for key in self._ax_profile_by_name.keys():
             conf = self._ax_profile_by_name[key]
             conf["ax"].clear()
             conf["ax"].set_ylim([0, 0.5])
-            conf["ax"].set_title(conf["gen_title"](0))
+            conf["ax"].set_title(conf["gen_title"]([0, 0]))
             conf["ax"].set_xlabel(conf["xlabel"])
-            conf["ax"].set_ylabel(conf["gen_ylabel"](0))
+            conf["ax"].set_ylabel(conf["gen_ylabel"]([0, 0]))
 
         self._gs_master.tight_layout(self._fig)
         plt.subplots_adjust(hspace=0.5, wspace=0.5)
@@ -103,9 +103,9 @@ class Viewer():
             conf = self._ax_profile_by_name[key]
             conf["ax"].clear()
             conf["ax"].set_ylim([0, 0.5])
-            conf["ax"].set_title(conf["gen_title"](y))
+            conf["ax"].set_title(conf["gen_title"]([x, y]))
             conf["ax"].set_xlabel(conf["xlabel"])
-            conf["ax"].set_ylabel(conf["gen_ylabel"](y))
+            conf["ax"].set_ylabel(conf["gen_ylabel"]([x, y]))
             conf["ax"].plot(
                     profile_by_name[key]["x"],
                     profile_by_name[key]["values"])
