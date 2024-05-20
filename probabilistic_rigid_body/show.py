@@ -33,6 +33,7 @@ def show():
         type=float,
         default=[1e-20, 1e-20],
         show_default=True)
+@click.option("--fill-threshold", type=float, default=0.995, show_default=True)
 def rigid_body(
         init_pos,
         pos_std,
@@ -44,7 +45,8 @@ def rigid_body(
         dist_size,
         iteration,
         pos_std_per_iteration,
-        body_size_std_per_iteration):
+        body_size_std_per_iteration,
+        fill_threshold):
     rbs = [
         RigidBody(p, pos_std, angle_deg, bs, body_size_std)
         for p, bs in [
@@ -59,7 +61,7 @@ def rigid_body(
     gridmap = np.meshgrid(xs, ys)
 
     pd = ProbabilityDistribution(gridmap)
-    viewer = Viewer(gridmap)
+    viewer = Viewer(gridmap, fill_threshold)
 
     for i, rb in enumerate(rbs):
         print(f"no {i+1}/{len(rbs)}")

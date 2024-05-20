@@ -10,8 +10,9 @@ _FIG_SCALE_FACTOR=0.6
 
 
 class Viewer():
-    def __init__(self, meshgrid):
+    def __init__(self, meshgrid, fill_threshold):
         self._meshgrid = meshgrid
+        self._fill_threshold = fill_threshold
 
         self._fig = plt.figure(figsize=(
             10*_FIG_SCALE_FACTOR,
@@ -85,17 +86,72 @@ class Viewer():
             return
 
         x, y = event.xdata, event.ydata
-        col = np.argmin(np.abs(self._meshgrid[0][0, :] - x))
-        row = np.argmin(np.abs(self._meshgrid[1][:, 0] - y))
+
+        xs = self._meshgrid[0][0, :]
+        ys = self._meshgrid[1][:, 0]
+
+        col = np.argmin(np.abs(xs - x))
+        row = np.argmin(np.abs(ys - y))
+
+        profile_xs = self._image[row, :] / np.sum(self._image[row, :])
+        profile_ys = self._image[:,col] / np.sum(self._image[:, col])
+
+        def calc_fill_range(values, th):
+            # 両サイドから中央値を求めて，その間をベースidxとする
+            med_begin = 0.0
+            med_begin_idx = 0
+            for i, v in enumerate(values):
+                med_begin += v
+                if med_begin >= 0.5:
+                    med_begin_idx = i
+                    break
+            med_end = 0.0
+            med_end_idx = med_begin_idx
+            for i, v in enumerate(values):
+                if i <= med_begin_idx:
+                    continue
+                med_end += v
+                if med_end >= 0.5:
+                    med_end_idx = i
+                    break
+
+            base_idx = int((med_begin_idx + med_end_idx) / 2)
+
+            prob_sum = 0.0
+            d = 0
+            try:
+                while True:
+                    if d == 0:
+                        prob_sum += values[base_idx]
+                    else:
+                        prob_sum += values[base_idx + d]
+                        prob_sum += values[base_idx - d]
+                    # if prob_sum >= 0.9973:
+                    if prob_sum >= th:
+                        break
+                    d += 1
+            except IndexError:
+                return [0, len(values)]
+            return [
+                    max([base_idx - d, 0]),
+                    min([base_idx + d, len(values)])]
+
+        th = 0.995
+        fill_range_x = calc_fill_range(profile_xs, self._fill_threshold)
+        fill_range_y = calc_fill_range(profile_ys, self._fill_threshold)
 
         profile_by_name = {
-                "col": {
-                    "x": self._meshgrid[0][0, :],
-                    "values": self._image[:, col] / np.sum(self._image[:, col]),
-                    },
                 "row": {
-                    "x": self._meshgrid[1][:, 0],
-                    "values": self._image[row, :] / np.sum(self._image[row, :]),
+                    "x": xs,
+                    "values": profile_xs,
+                    "x_fill": xs[fill_range_x[0]:fill_range_x[1]],
+                    "values_fill": profile_xs[fill_range_x[0]:fill_range_x[1]],
+                    },
+                "col": {
+                    "x": ys,
+                    "values": profile_ys,
+                    "x_fill": ys[fill_range_y[0]:fill_range_y[1]],
+                    "values_fill": profile_ys[fill_range_y[0]:fill_range_y[1]],
                     }
                 }
 
@@ -109,6 +165,9 @@ class Viewer():
             conf["ax"].plot(
                     profile_by_name[key]["x"],
                     profile_by_name[key]["values"])
+            conf["ax"].fill_between(
+                    profile_by_name[key]["x_fill"],
+                    profile_by_name[key]["values_fill"])
 
         self._gs_master.tight_layout(self._fig)
         self._fig.canvas.draw()
