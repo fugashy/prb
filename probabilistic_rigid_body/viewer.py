@@ -8,6 +8,46 @@ from matplotlib.widgets import Cursor
 
 _FIG_SCALE_FACTOR=0.6
 
+def calc_fill_range(values, th):
+    # 両サイドから中央値を求めて，その間をベースidxとする
+    med_begin = 0.0
+    med_begin_idx = 0
+    for i, v in enumerate(values):
+        med_begin += v
+        if med_begin >= 0.5:
+            med_begin_idx = i
+            break
+    med_end = 0.0
+    med_end_idx = med_begin_idx
+    for i, v in enumerate(values):
+        if i <= med_begin_idx:
+            continue
+        med_end += v
+        if med_end >= 0.5:
+            med_end_idx = i
+            break
+
+    base_idx = int((med_begin_idx + med_end_idx) / 2)
+
+    prob_sum = 0.0
+    d = 0
+    try:
+        while True:
+            if d == 0:
+                prob_sum += values[base_idx]
+            else:
+                prob_sum += values[base_idx + d]
+                prob_sum += values[base_idx - d]
+            # if prob_sum >= 0.9973:
+            if prob_sum >= th:
+                break
+            d += 1
+    except IndexError:
+        return [0, len(values)-1]
+    return [
+            max([base_idx - d, 0]),
+            min([base_idx + d, len(values)-1])]
+
 
 class Viewer():
     def __init__(self, meshgrid, fill_threshold):
@@ -96,46 +136,6 @@ class Viewer():
         profile_xs = self._image[row, :] / np.sum(self._image[row, :])
         profile_ys = self._image[:,col] / np.sum(self._image[:, col])
 
-        def calc_fill_range(values, th):
-            # 両サイドから中央値を求めて，その間をベースidxとする
-            med_begin = 0.0
-            med_begin_idx = 0
-            for i, v in enumerate(values):
-                med_begin += v
-                if med_begin >= 0.5:
-                    med_begin_idx = i
-                    break
-            med_end = 0.0
-            med_end_idx = med_begin_idx
-            for i, v in enumerate(values):
-                if i <= med_begin_idx:
-                    continue
-                med_end += v
-                if med_end >= 0.5:
-                    med_end_idx = i
-                    break
-
-            base_idx = int((med_begin_idx + med_end_idx) / 2)
-
-            prob_sum = 0.0
-            d = 0
-            try:
-                while True:
-                    if d == 0:
-                        prob_sum += values[base_idx]
-                    else:
-                        prob_sum += values[base_idx + d]
-                        prob_sum += values[base_idx - d]
-                    # if prob_sum >= 0.9973:
-                    if prob_sum >= th:
-                        break
-                    d += 1
-            except IndexError:
-                return [0, len(values)]
-            return [
-                    max([base_idx - d, 0]),
-                    min([base_idx + d, len(values)])]
-
         th = 0.995
         fill_range_x = calc_fill_range(profile_xs, self._fill_threshold)
         fill_range_y = calc_fill_range(profile_ys, self._fill_threshold)
@@ -146,12 +146,14 @@ class Viewer():
                     "values": profile_xs,
                     "x_fill": xs[fill_range_x[0]:fill_range_x[1]],
                     "values_fill": profile_xs[fill_range_x[0]:fill_range_x[1]],
+                    "fill_range": fill_range_x,
                     },
                 "col": {
                     "x": ys,
                     "values": profile_ys,
                     "x_fill": ys[fill_range_y[0]:fill_range_y[1]],
                     "values_fill": profile_ys[fill_range_y[0]:fill_range_y[1]],
+                    "fill_range": fill_range_y,
                     }
                 }
 
@@ -168,6 +170,19 @@ class Viewer():
             conf["ax"].fill_between(
                     profile_by_name[key]["x_fill"],
                     profile_by_name[key]["values_fill"])
+            fill_range = profile_by_name[key]["fill_range"]
+
+            from_idx = fill_range[0]
+            to_idx = fill_range[1]
+            from_v = profile_by_name[key]["x"][from_idx]
+            to_v = profile_by_name[key]["x"][to_idx]
+            conf["ax"].vlines([from_v, to_v], 0, 0.5, linestyles="dotted", color="black")
+
+            v_range = to_v - from_v
+            conf["ax"].text(
+                    int((to_v + from_v) / 2),
+                    0.3,
+                    f"{v_range:.2f}")
 
         self._gs_master.tight_layout(self._fig)
         self._fig.canvas.draw()

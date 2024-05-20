@@ -33,7 +33,7 @@ def show():
         type=float,
         default=[1e-20, 1e-20],
         show_default=True)
-@click.option("--fill-threshold", type=float, default=0.995, show_default=True)
+@click.option("--fill-threshold", type=float, default=0.95, show_default=True)
 def rigid_body(
         init_pos,
         pos_std,
