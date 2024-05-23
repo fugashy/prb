@@ -146,10 +146,12 @@ class Viewer():
                     }
                 }
 
+        ylim = [0, np.max(np.nan_to_num([profile_xs, profile_ys])) + 0.1]
+
         for key in profile_by_name.keys():
             conf = self._ax_profile_by_name[key]
             conf["ax"].clear()
-            conf["ax"].set_ylim([0, 0.5])
+            conf["ax"].set_ylim(ylim)
             conf["ax"].set_title(conf["gen_title"]([x, y]))
             conf["ax"].set_xlabel(conf["xlabel"])
             conf["ax"].set_ylabel(conf["gen_ylabel"]([x, y]))
@@ -165,12 +167,15 @@ class Viewer():
             to_idx = fill_range[1]
             from_v = profile_by_name[key]["x"][from_idx]
             to_v = profile_by_name[key]["x"][to_idx]
-            conf["ax"].vlines([from_v, to_v], 0, 0.5, linestyles="dotted", color="black")
+            conf["ax"].vlines(
+                    [from_v, to_v],
+                    ylim[0], ylim[1],
+                    linestyles="dotted", color="black")
 
             v_range = to_v - from_v
             conf["ax"].text(
                     ((to_v + from_v) / 2),
-                    0.3,
+                    ylim[1] / 2,
                     f"{v_range:.2f}")
 
         self._gs_master.tight_layout(self._fig)
