@@ -9,25 +9,15 @@ from matplotlib.widgets import Cursor
 _FIG_SCALE_FACTOR=0.6
 
 def calc_fill_range(values, th):
-    # 両サイドから中央値を求めて，その間をベースidxとする
+    # 分布の中心位置を求める
+    # 中央値を基準とする
     med_begin = 0.0
-    med_begin_idx = 0
+    base_idx = 0
     for i, v in enumerate(values):
         med_begin += v
         if med_begin >= 0.5:
-            med_begin_idx = i
+            base_idx = i
             break
-    med_end = 0.0
-    med_end_idx = med_begin_idx
-    for i, v in enumerate(values):
-        if i <= med_begin_idx:
-            continue
-        med_end += v
-        if med_end >= 0.5:
-            med_end_idx = i
-            break
-
-    base_idx = int((med_begin_idx + med_end_idx) / 2)
 
     prob_sum = 0.0
     d = 0
@@ -38,7 +28,6 @@ def calc_fill_range(values, th):
             else:
                 prob_sum += values[base_idx + d]
                 prob_sum += values[base_idx - d]
-            # if prob_sum >= 0.9973:
             if prob_sum >= th:
                 break
             d += 1
@@ -180,7 +169,7 @@ class Viewer():
 
             v_range = to_v - from_v
             conf["ax"].text(
-                    int((to_v + from_v) / 2),
+                    ((to_v + from_v) / 2),
                     0.3,
                     f"{v_range:.2f}")
 
